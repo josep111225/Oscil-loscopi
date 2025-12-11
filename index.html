@@ -5,29 +5,71 @@
   <title>Oscil·loscopi</title>
   <style>
     body { font-family: sans-serif; text-align: center; }
-    canvas { border: 1px solid #ccc; margin-top: 20px; }
+    canvas { border: 1px solid #000; margin-top: 20px; background: #fff; }
+    .controls { margin-top: 20px; }
+    label { margin: 0 10px; }
   </style>
 </head>
 <body>
   <h1>Oscil·loscopi virtual</h1>
-  <label for="waveType">Tria el tipus d'ona:</label>
-  <select id="waveType" onchange="drawWave()">
-    <option value="sine">Sinusoidal</option>
-    <option value="square">Rectangular</option>
-    <option value="sawtooth">Dent de serra</option>
-  </select>
 
-  <canvas id="waveCanvas" width="600" height="200"></canvas>
+  <div class="controls">
+    <label>Tipus d'ona:
+      <select id="waveType" onchange="drawWave()">
+        <option value="sine">Sinusoidal</option>
+        <option value="square">Rectangular</option>
+        <option value="sawtooth">Dent de serra</option>
+      </select>
+    </label>
+    <label>Amplitud:
+      <input type="range" id="amplitude" min="10" max="100" value="50" oninput="drawWave()">
+    </label>
+    <label>Freqüència:
+      <input type="range" id="frequency" min="1" max="20" value="5" oninput="drawWave()">
+    </label>
+  </div>
+
+  <canvas id="waveCanvas" width="800" height="400"></canvas>
 
   <script>
+    function drawGrid(ctx, width, height, divX, divY) {
+      ctx.strokeStyle = "#ccc";
+      ctx.lineWidth = 1;
+      for (let x = 0; x <= width; x += divX) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
+      for (let y = 0; y <= height; y += divY) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+
+      // Etiquetes temps/div i V/div
+      ctx.fillStyle = "#000";
+      ctx.font = "14px sans-serif";
+      ctx.fillText("Temps/div: " + divX + " px", 10, 20);
+      ctx.fillText("V/div: " + divY + " px", 10, 40);
+    }
+
     function drawWave() {
       const canvas = document.getElementById('waveCanvas');
       const ctx = canvas.getContext('2d');
       const waveType = document.getElementById('waveType').value;
+      const amplitude = parseInt(document.getElementById('amplitude').value);
+      const frequency = parseInt(document.getElementById('frequency').value);
       const width = canvas.width;
       const height = canvas.height;
+
       ctx.clearRect(0, 0, width, height);
 
+      // Dibuixar quadrícula més marcada
+      drawGrid(ctx, width, height, 80, 40);
+
+      // Dibuixar l'ona
       ctx.beginPath();
       ctx.moveTo(0, height / 2);
 
@@ -35,23 +77,24 @@
         let y;
         switch (waveType) {
           case 'sine':
-            y = height / 2 + 50 * Math.sin(x * 0.05);
+            y = height / 2 + amplitude * Math.sin(x * frequency * 0.01);
             break;
           case 'square':
-            y = (x % 100 < 50) ? height / 2 - 50 : height / 2 + 50;
+            y = (Math.sin(x * frequency * 0.01) > 0) ? height / 2 - amplitude : height / 2 + amplitude;
             break;
           case 'sawtooth':
-            y = height / 2 - 50 + (x % 100);
+            y = height / 2 - amplitude + ((x * frequency) % (2 * amplitude));
             break;
         }
         ctx.lineTo(x, y);
       }
 
-      ctx.strokeStyle = '#0077cc';
+      ctx.strokeStyle = "#0077cc";
+      ctx.lineWidth = 2;
       ctx.stroke();
     }
 
-    drawWave(); // Dibuixa la primera ona per defecte
+    drawWave(); // Dibuixa inicialment
   </script>
 </body>
 </html>
