@@ -8,6 +8,7 @@
     canvas { border: 1px solid #000; margin-top: 20px; background: #fff; }
     .controls { margin-top: 20px; }
     label { margin: 0 10px; }
+    #info { margin-top: 10px; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -27,11 +28,23 @@
     <label>Freqüència:
       <input type="range" id="frequency" min="1" max="20" value="5" oninput="drawWave()">
     </label>
+    <br>
+    <label>Temps/div:
+      <input type="range" id="timeDiv" min="40" max="160" value="80" step="20" oninput="drawWave()">
+    </label>
+    <label>V/div:
+      <input type="range" id="voltDiv" min="20" max="80" value="40" step="10" oninput="drawWave()">
+    </label>
   </div>
 
   <canvas id="waveCanvas" width="800" height="400"></canvas>
+  <div id="info">Mou el cursor sobre el gràfic per veure valors</div>
 
   <script>
+    let lastWavePoints = [];
+    let timeDiv = 80;
+    let voltDiv = 40;
+
     function drawGrid(ctx, width, height, divX, divY) {
       ctx.strokeStyle = "#ccc";
       ctx.lineWidth = 1;
@@ -61,17 +74,20 @@
       const waveType = document.getElementById('waveType').value;
       const amplitude = parseInt(document.getElementById('amplitude').value);
       const frequency = parseInt(document.getElementById('frequency').value);
+      timeDiv = parseInt(document.getElementById('timeDiv').value);
+      voltDiv = parseInt(document.getElementById('voltDiv').value);
       const width = canvas.width;
       const height = canvas.height;
 
       ctx.clearRect(0, 0, width, height);
 
-      // Dibuixar quadrícula més marcada
-      drawGrid(ctx, width, height, 80, 40);
+      // Dibuixar quadrícula
+      drawGrid(ctx, width, height, timeDiv, voltDiv);
 
       // Dibuixar l'ona
       ctx.beginPath();
       ctx.moveTo(0, height / 2);
+      lastWavePoints = [];
 
       for (let x = 0; x < width; x++) {
         let y;
@@ -87,12 +103,27 @@
             break;
         }
         ctx.lineTo(x, y);
+        lastWavePoints.push({x, y});
       }
 
       ctx.strokeStyle = "#0077cc";
       ctx.lineWidth = 2;
       ctx.stroke();
     }
+
+    // Cursor de mesura
+    const canvas = document.getElementById('waveCanvas');
+    const info = document.getElementById('info');
+    canvas.addEventListener('mousemove', function(evt) {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = evt.clientX - rect.left;
+      const point = lastWavePoints.find(p => p.x === Math.round(mouseX));
+      if (point) {
+        const time = (point.x / timeDiv).toFixed(2) + " div";
+        const voltage = ((canvas.height/2 - point.y) / voltDiv).toFixed(2) + " div";
+        info.textContent = "Temps: " + time + " | Tensió: " + voltage;
+      }
+    });
 
     drawWave(); // Dibuixa inicialment
   </script>
