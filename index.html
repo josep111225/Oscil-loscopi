@@ -2,43 +2,66 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Oscil·loscopi</title>
+  <title>Oscil·loscopi amb controls integrats</title>
   <style>
     body { font-family: sans-serif; text-align: center; }
-    canvas { border: 1px solid #000; margin-top: 20px; background: #fff; }
-    .controls { margin-top: 20px; }
-    label { margin: 0 10px; }
-    #info { margin-top: 10px; font-weight: bold; }
+    .oscilloscope {
+      position: relative;
+      display: inline-block;
+    }
+    .oscilloscope img {
+      width: 800px; /* ajusta segons la mida de la imatge */
+    }
+    #waveCanvas {
+      position: absolute;
+      top: 100px;   /* ajusta per col·locar el canvas a la pantalla */
+      left: 150px;
+      width: 500px;
+      height: 300px;
+      background: transparent;
+    }
+    .control {
+      position: absolute;
+      background: rgba(255,255,255,0.8);
+      padding: 5px;
+      border-radius: 5px;
+      font-size: 12px;
+    }
+    /* Exemple de posicions: ajusta segons la imatge */
+    #freqControl { top: 420px; left: 200px; }
+    #ampControl { top: 420px; left: 300px; }
+    #timeDivControl { top: 420px; left: 400px; }
+    #voltDivControl { top: 420px; left: 500px; }
   </style>
 </head>
 <body>
   <h1>Oscil·loscopi virtual</h1>
 
-  <div class="controls">
-    <label>Tipus d'ona:
-      <select id="waveType" onchange="drawWave()">
-        <option value="sine">Sinusoidal</option>
-        <option value="square">Rectangular</option>
-        <option value="sawtooth">Dent de serra</option>
-      </select>
-    </label>
-    <label>Amplitud:
-      <input type="range" id="amplitude" min="10" max="100" value="50" oninput="drawWave()">
-    </label>
-    <label>Freqüència:
-      <input type="range" id="frequency" min="1" max="20" value="5" oninput="drawWave()">
-    </label>
-    <br>
-    <label>Temps/div:
-      <input type="range" id="timeDiv" min="40" max="160" value="80" step="20" oninput="drawWave()">
-    </label>
-    <label>V/div:
-      <input type="range" id="voltDiv" min="20" max="80" value="40" step="10" oninput="drawWave()">
-    </label>
-  </div>
+  <div class="oscilloscope">
+    <!-- Imatge de l’oscil·loscopi -->
+    <img src="osciloscopi.png" alt="Oscil·loscopi">
 
-  <canvas id="waveCanvas" width="800" height="400"></canvas>
-  <div id="info">Mou el cursor sobre el gràfic per veure valors</div>
+    <!-- Canvas a sobre de la pantalla -->
+    <canvas id="waveCanvas" width="500" height="300"></canvas>
+
+    <!-- Controls integrats -->
+    <div id="freqControl" class="control">
+      Freqüència<br>
+      <input type="range" id="frequency" min="1" max="20" value="5" oninput="drawWave()">
+    </div>
+    <div id="ampControl" class="control">
+      Amplitud<br>
+      <input type="range" id="amplitude" min="10" max="100" value="50" oninput="drawWave()">
+    </div>
+    <div id="timeDivControl" class="control">
+      Temps/div<br>
+      <input type="range" id="timeDiv" min="40" max="160" value="80" step="20" oninput="drawWave()">
+    </div>
+    <div id="voltDivControl" class="control">
+      V/div<br>
+      <input type="range" id="voltDiv" min="20" max="80" value="40" step="10" oninput="drawWave()">
+    </div>
+  </div>
 
   <script>
     let lastWavePoints = [];
@@ -60,9 +83,7 @@
         ctx.lineTo(width, y);
         ctx.stroke();
       }
-
-      // Etiquetes temps/div i V/div
-      ctx.fillStyle = "#000";
+      ctx.fillStyle = "#0f0"; // verd com pantalla real
       ctx.font = "14px sans-serif";
       ctx.fillText("Temps/div: " + divX + " px", 10, 20);
       ctx.fillText("V/div: " + divY + " px", 10, 40);
@@ -71,7 +92,6 @@
     function drawWave() {
       const canvas = document.getElementById('waveCanvas');
       const ctx = canvas.getContext('2d');
-      const waveType = document.getElementById('waveType').value;
       const amplitude = parseInt(document.getElementById('amplitude').value);
       const frequency = parseInt(document.getElementById('frequency').value);
       timeDiv = parseInt(document.getElementById('timeDiv').value);
@@ -80,52 +100,24 @@
       const height = canvas.height;
 
       ctx.clearRect(0, 0, width, height);
-
-      // Dibuixar quadrícula
       drawGrid(ctx, width, height, timeDiv, voltDiv);
 
-      // Dibuixar l'ona
       ctx.beginPath();
       ctx.moveTo(0, height / 2);
       lastWavePoints = [];
 
       for (let x = 0; x < width; x++) {
-        let y;
-        switch (waveType) {
-          case 'sine':
-            y = height / 2 + amplitude * Math.sin(x * frequency * 0.01);
-            break;
-          case 'square':
-            y = (Math.sin(x * frequency * 0.01) > 0) ? height / 2 - amplitude : height / 2 + amplitude;
-            break;
-          case 'sawtooth':
-            y = height / 2 - amplitude + ((x * frequency) % (2 * amplitude));
-            break;
-        }
+        let y = height / 2 + amplitude * Math.sin(x * frequency * 0.01);
         ctx.lineTo(x, y);
         lastWavePoints.push({x, y});
       }
 
-      ctx.strokeStyle = "#0077cc";
+      ctx.strokeStyle = "#0f0"; // verd
       ctx.lineWidth = 2;
       ctx.stroke();
     }
 
-    // Cursor de mesura
-    const canvas = document.getElementById('waveCanvas');
-    const info = document.getElementById('info');
-    canvas.addEventListener('mousemove', function(evt) {
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = evt.clientX - rect.left;
-      const point = lastWavePoints.find(p => p.x === Math.round(mouseX));
-      if (point) {
-        const time = (point.x / timeDiv).toFixed(2) + " div";
-        const voltage = ((canvas.height/2 - point.y) / voltDiv).toFixed(2) + " div";
-        info.textContent = "Temps: " + time + " | Tensió: " + voltage;
-      }
-    });
-
-    drawWave(); // Dibuixa inicialment
+    drawWave();
   </script>
 </body>
 </html>
