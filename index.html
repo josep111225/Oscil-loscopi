@@ -1,31 +1,57 @@
 <!DOCTYPE html>
-<html lang="ca">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Oscil·loscopi Web</title>
-    <style>
-        body { background:#111; color:white; font-family:Arial; }
-        #screen { background:black; border:2px solid #0f0; }
-        .controls { margin-top:20px; }
-        label { margin-right:10px; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Oscil·loscopi</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; }
+    canvas { border: 1px solid #ccc; margin-top: 20px; }
+  </style>
 </head>
 <body>
+  <h1>Oscil·loscopi virtual</h1>
+  <label for="waveType">Tria el tipus d'ona:</label>
+  <select id="waveType" onchange="drawWave()">
+    <option value="sine">Sinusoidal</option>
+    <option value="square">Rectangular</option>
+    <option value="sawtooth">Dent de serra</option>
+  </select>
 
-<h2>Oscil·loscopi Web — Versió Bàsica</h2>
+  <canvas id="waveCanvas" width="600" height="200"></canvas>
 
-<canvas id="screen" width="800" height="400"></canvas>
+  <script>
+    function drawWave() {
+      const canvas = document.getElementById('waveCanvas');
+      const ctx = canvas.getContext('2d');
+      const waveType = document.getElementById('waveType').value;
+      const width = canvas.width;
+      const height = canvas.height;
+      ctx.clearRect(0, 0, width, height);
 
-<div class="controls">
-    <label>Freqüència:
-        <input type="range" id="freq" min="1" max="50" value="5">
-    </label>
-    <label>Amplitud:
-        <input type="range" id="amp" min="10" max="200" value="80">
-    </label>
-</div>
+      ctx.beginPath();
+      ctx.moveTo(0, height / 2);
 
-<script src="oscilloscope.js"></script>
+      for (let x = 0; x < width; x++) {
+        let y;
+        switch (waveType) {
+          case 'sine':
+            y = height / 2 + 50 * Math.sin(x * 0.05);
+            break;
+          case 'square':
+            y = (x % 100 < 50) ? height / 2 - 50 : height / 2 + 50;
+            break;
+          case 'sawtooth':
+            y = height / 2 - 50 + (x % 100);
+            break;
+        }
+        ctx.lineTo(x, y);
+      }
 
+      ctx.strokeStyle = '#0077cc';
+      ctx.stroke();
+    }
+
+    drawWave(); // Dibuixa la primera ona per defecte
+  </script>
 </body>
 </html>
